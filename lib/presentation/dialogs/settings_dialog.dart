@@ -245,7 +245,7 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
               leading: _getProviderIcon(model.provider),
               title: Text(model.name),
               subtitle: Text('${model.provider.value} - ${model.modelId}'),
-              trailing: Row(
+                trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (isActive)
@@ -265,6 +265,12 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
                       );
                     },
                   ),
+                  // 削除ボタン（最後の1件は削除不可）
+                  if (settings.models.length > 1)
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () => _deleteModel(settings, model),
+                    ),
                 ],
               ),
             ),
@@ -479,5 +485,42 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
       case WatsonInterventionLevel.high:
         return '積極的に介入し、詳細にチェック';
     }
+  }
+
+  void _deleteModel(UserSettings settings, ModelConfig model) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('モデルを削除'),
+        content: Text('「${model.name}」を削除してもよろしいですか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
+          TextButton(
+            onPressed: () {
+              final newModels = settings.models
+                  .where((m) => m.id != model.id)
+                  .toList();
+              
+              // アクティブモデルが削除された場合、最初のモデルをアクティブに
+              String newActiveId = settings.activeModelId;
+              if (model.id == settings.activeModelId && newModels.isNotEmpty) {
+                newActiveId = newModels.first.id;
+              }
+              
+              final newSettings = settings.copyWith(
+                models: List<ModelConfig>.from(newModels),
+                activeModelId: newActiveId,
+              );
+              ref.read(settingsProvider.notifier).updateSettings(newSettings);
+              Navigator.pop(context);
+            },
+            child: const Text('削除', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
   }
 }
