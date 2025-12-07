@@ -26,6 +26,7 @@ class ChatScreen extends ConsumerStatefulWidget {
 }
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _isSidebarOpen = false;
   bool _isSettingsOpen = false;
   final ScrollController _scrollController = ScrollController();
@@ -110,6 +111,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
+      key: _scaffoldKey,
       // モバイル用Drawer
       drawer: isMobile
           ? Drawer(
@@ -273,7 +275,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               onPressed: () {
                 if (isMobile) {
                   // モバイルではDrawerを開く
-                  Scaffold.of(context).openDrawer();
+                  _scaffoldKey.currentState?.openDrawer();
                 } else {
                   setState(() {
                     _isSidebarOpen = !_isSidebarOpen;
