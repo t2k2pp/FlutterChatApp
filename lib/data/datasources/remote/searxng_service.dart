@@ -35,7 +35,7 @@ class SearchService {
       final response = await http.get(uri);
 
       if (response.statusCode != 200) {
-        throw Exception('検索失敗: ${response.statusText}');
+        throw Exception('検索失敗: ${response.statusCode}');
       }
 
       final data = jsonDecode(response.body);

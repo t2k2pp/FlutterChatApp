@@ -92,7 +92,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
     final settingsAsync = ref.watch(settingsProvider);
-    final currentSession = ref.watch(currentSessionProvider);
 
     // メッセージが追加されたらスクロール
     ref.listen(chatProvider, (previous, next) {

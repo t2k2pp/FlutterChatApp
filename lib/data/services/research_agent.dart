@@ -181,9 +181,7 @@ ${findings.join('\n\n')}
     }
   }
 
-  /// ログ
-
-を追加
+  /// ログを追加
   void _addLog(ReasoningType type, String content) {
     final log = ReasoningStep(
       type: type,

@@ -4,6 +4,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_chat_app/domain/models/message.dart';
 import 'package:flutter_chat_app/domain/enums/role.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'dart:convert';
 
 /// チャットメッセージウィジェット
 class ChatMessage extends StatefulWidget {
@@ -123,7 +124,7 @@ class _ChatMessageState extends State<ChatMessage> {
                         return ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Image.memory(
-                            const Base64Decoder().convert(img.base64),
+                            base64.decode(img.base64),
                             width: 200,
                             height: 200,
                             fit: BoxFit.cover,
