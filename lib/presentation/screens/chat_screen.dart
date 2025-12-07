@@ -107,12 +107,39 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       }
     });
 
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return Scaffold(
+      // モバイル用Drawer
+      drawer: isMobile
+          ? Drawer(
+              child: SafeArea(
+                child: Sidebar(
+                  isOpen: true,
+                  onClose: () => Navigator.pop(context),
+                  onOpenSettings: () {
+                    Navigator.pop(context);
+                    showDialog(
+                      context: context,
+                      builder: (context) => const SettingsDialog(),
+                    );
+                  },
+                  onOpenProjects: () {
+                    Navigator.pop(context);
+                    showDialog(
+                      context: context,
+                      builder: (context) => const ProjectManagerDialog(),
+                    );
+                  },
+                ),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: Row(
           children: [
-            // サイドバー
-            if (_isSidebarOpen)
+            // サイドバー（デスクトップのみ）
+            if (!isMobile && _isSidebarOpen)
               Sidebar(
                 isOpen: _isSidebarOpen,
                 onClose: () {
@@ -226,6 +253,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildHeader(List<Project>? projects) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    
     return Container(
       height: 56,
       decoration: const BoxDecoration(
@@ -235,50 +264,56 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Row(
           children: [
             // サイドバートグルボタン
-            if (!_isSidebarOpen)
-              IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () {
+            IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () {
+                if (isMobile) {
+                  // モバイルではDrawerを開く
+                  Scaffold.of(context).openDrawer();
+                } else {
                   setState(() {
-                    _isSidebarOpen = true;
+                    _isSidebarOpen = !_isSidebarOpen;
                   });
-                },
-                tooltip: 'サイドバーを開く',
-              ),
-
-            // タイトル
-            const Text(
-              'Multi GenAI Chat',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-              ),
+                }
+              },
+              tooltip: 'メニュー',
             ),
+
+            // タイトル（モバイルでは非表示）
+            if (!isMobile)
+              const Text(
+                'Multi GenAI Chat',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
 
             const Spacer(),
 
             // モデルセレクター
-            ModelSelector(
-              onManageModels: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => const SettingsDialog(),
-                );
-              },
+            Flexible(
+              child: ModelSelector(
+                onManageModels: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const SettingsDialog(),
+                  );
+                },
+              ),
             ),
 
-            const SizedBox(width: 8),
-
-            // ダウンロードボタン
-            IconButton(
-              icon: const Icon(Icons.download),
-              onPressed: () => _showExportDialog(context),
-              tooltip: 'チャットをダウンロード',
-            ),
+            // ダウンロードボタン（モバイルでは非表示）
+            if (!isMobile)
+              IconButton(
+                icon: const Icon(Icons.download),
+                onPressed: () => _showExportDialog(context),
+                tooltip: 'チャットをダウンロード',
+              ),
           ],
         ),
       ),

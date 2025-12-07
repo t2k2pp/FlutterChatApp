@@ -20,11 +20,14 @@ class _ProjectManagerDialogState extends ConsumerState<ProjectManagerDialog> {
   @override
   Widget build(BuildContext context) {
     final settingsAsync = ref.watch(settingsProvider);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
 
     return Dialog(
+      insetPadding: EdgeInsets.all(isMobile ? 16 : 40),
       child: Container(
-        width: 900,
-        height: 700,
+        width: isMobile ? double.infinity : 900,
+        height: isMobile ? MediaQuery.of(context).size.height * 0.8 : 700,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           color: Colors.white,
@@ -39,29 +42,35 @@ class _ProjectManagerDialogState extends ConsumerState<ProjectManagerDialog> {
   }
 
   Widget _buildContent(UserSettings settings) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    
     return Column(
       children: [
         // ヘッダー
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(isMobile ? 12 : 20),
           decoration: const BoxDecoration(
             border: Border(bottom: BorderSide(color: AppColors.border)),
           ),
           child: Row(
             children: [
               const Icon(Icons.folder, color: AppColors.primary),
-              const SizedBox(width: 12),
-              const Text(
-                'プロジェクト / Gems',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const Spacer(),
-              ElevatedButton.icon(
-                onPressed: () => _createNewProject(settings),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('新規作成'),
-              ),
               const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  isMobile ? 'プロジェクト' : 'プロジェクト / Gems',
+                  style: TextStyle(
+                    fontSize: isMobile ? 16 : 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () => _createNewProject(settings),
+                tooltip: '新規作成',
+              ),
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.of(context).pop(),
@@ -72,29 +81,61 @@ class _ProjectManagerDialogState extends ConsumerState<ProjectManagerDialog> {
 
         // 本体
         Expanded(
-          child: Row(
-            children: [
-              // プロジェクト一覧
-              _buildProjectList(settings),
-              // プロジェクト詳細
-              Expanded(
-                child: _selectedProject != null
-                    ? _buildProjectDetails(settings, _selectedProject!)
-                    : _buildEmptyState(),
-              ),
-            ],
-          ),
+          child: isMobile
+              ? _buildMobileContent(settings)
+              : Row(
+                  children: [
+                    // プロジェクト一覧
+                    _buildProjectList(settings),
+                    // プロジェクト詳細
+                    Expanded(
+                      child: _selectedProject != null
+                          ? _buildProjectDetails(settings, _selectedProject!)
+                          : _buildEmptyState(),
+                    ),
+                  ],
+                ),
         ),
       ],
     );
   }
+  
+  Widget _buildMobileContent(UserSettings settings) {
+    if (_selectedProject != null) {
+      return Column(
+        children: [
+          // 戻るボタン
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    setState(() {
+                      _selectedProject = null;
+                    });
+                  },
+                ),
+                Text(_selectedProject!.name),
+              ],
+            ),
+          ),
+          Expanded(child: _buildProjectDetails(settings, _selectedProject!)),
+        ],
+      );
+    }
+    return _buildProjectList(settings);
+  }
 
   Widget _buildProjectList(UserSettings settings) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    
     return Container(
-      width: 300,
-      decoration: const BoxDecoration(
+      width: isMobile ? double.infinity : 300,
+      decoration: BoxDecoration(
         color: AppColors.surfaceAlt,
-        border: Border(right: BorderSide(color: AppColors.border)),
+        border: isMobile ? null : const Border(right: BorderSide(color: AppColors.border)),
       ),
       child: settings.projects.isEmpty
           ? const Center(
