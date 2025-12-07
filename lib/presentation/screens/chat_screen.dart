@@ -262,9 +262,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             // モデルセレクター
             ModelSelector(
               onManageModels: () {
-                setState(() {
-                  _isSettingsOpen = true;
-                });
+                showDialog(
+                  context: context,
+                  builder: (context) => const SettingsDialog(),
+                );
               },
             ),
 

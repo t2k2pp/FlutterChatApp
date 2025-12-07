@@ -279,15 +279,17 @@ class _ModelEditDialogState extends ConsumerState<ModelEditDialog> {
       temperature: _temperature,
       topP: _topP,
       topK: _topK,
-      enabled: true,
     );
 
     // 設定を更新
-    final List<ModelConfig> newModels = widget.existingModel == null
-        ? [...widget.settings.models, newModel]
-        : widget.settings.models.map((m) {
-            return m.id == newModel.id ? newModel : m;
-          }).toList();
+    List<ModelConfig> newModels;
+    if (widget.existingModel == null) {
+      newModels = List<ModelConfig>.from(widget.settings.models)..add(newModel);
+    } else {
+      newModels = widget.settings.models.map((m) {
+        return m.id == newModel.id ? newModel : m;
+      }).toList();
+    }
 
     final newSettings = widget.settings.copyWith(
       models: newModels,

@@ -281,6 +281,35 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
           ),
         ),
         const SizedBox(height: 24),
+        
+        // Watson用AIモデル選択
+        const Text(
+          'Watson用AIモデル',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: settings.subModelId,
+          decoration: const InputDecoration(
+            hintText: 'Watsonが使用するモデルを選択',
+          ),
+          items: settings.models.map((model) {
+            return DropdownMenuItem(
+              value: model.id,
+              child: Text(model.name),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              final newSettings = settings.copyWith(subModelId: value);
+              ref.read(settingsProvider.notifier).updateSettings(newSettings);
+            }
+          },
+        ),
+        
+        const SizedBox(height: 24),
         const Text(
           '介入レベル',
           style: TextStyle(

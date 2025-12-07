@@ -36,7 +36,7 @@ class ModelType {
 }
 
 /// デフォルトのモデル設定
-final defaultModels = [
+final List<ModelConfig> defaultModels = [
   ModelConfig(
     id: 'default-gemini-flash',
     name: 'Gemini 2.0 Flash',
