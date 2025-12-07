@@ -117,13 +117,10 @@ ${msg.text}
 
   /// ロール名を取得
   static String _getRoleName(Role role) {
-    switch (role) {
-      case Role.user:
-        return 'user';
-      case Role.model:
-        return 'ai';
-      case Role.watson:
-        return 'watson';
-    }
+    return switch (role) {
+      Role.user => 'user',
+      Role.model => 'ai',
+      Role.watson => 'watson',
+    };
   }
 }
