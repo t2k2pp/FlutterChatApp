@@ -25,14 +25,14 @@ _$UserSettingsImpl _$$UserSettingsImplFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$$UserSettingsImplToJson(_$UserSettingsImpl instance) =>
     <String, dynamic>{
-      'models': instance.models,
+      'models': instance.models.map((e) => e.toJson()).toList(),
       'activeModelId': instance.activeModelId,
       'subModelId': instance.subModelId,
       'watsonInterventionLevel':
           _$WatsonInterventionLevelEnumMap[instance.watsonInterventionLevel]!,
-      'projects': instance.projects,
-      'search': instance.search,
-      'tts': instance.tts,
+      'projects': instance.projects.map((e) => e.toJson()).toList(),
+      'search': instance.search.toJson(),
+      'tts': instance.tts.toJson(),
       'timeAwareness': instance.timeAwareness,
     };
 

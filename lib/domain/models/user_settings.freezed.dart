@@ -227,7 +227,8 @@ class __$$UserSettingsImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
+@JsonSerializable(explicitToJson: true)
 class _$UserSettingsImpl implements _UserSettings {
   const _$UserSettingsImpl(
       {required final List<ModelConfig> models,

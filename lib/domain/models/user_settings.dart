@@ -9,8 +9,9 @@ part 'user_settings.freezed.dart';
 part 'user_settings.g.dart';
 
 /// ユーザー設定を表すモデル
-@freezed
+@Freezed(toJson: true, fromJson: true)
 class UserSettings with _$UserSettings {
+  @JsonSerializable(explicitToJson: true)
   const factory UserSettings({
     required List<ModelConfig> models,
     required String activeModelId,
