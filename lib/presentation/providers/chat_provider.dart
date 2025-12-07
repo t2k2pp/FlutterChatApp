@@ -5,6 +5,7 @@ import 'package:flutter_chat_app/domain/models/reasoning_step.dart';
 import 'package:flutter_chat_app/domain/enums/role.dart';
 import 'package:flutter_chat_app/domain/enums/thinking_level.dart';
 import 'package:flutter_chat_app/core/utils/id_generator.dart';
+import 'package:flutter_chat_app/core/utils/session_utils.dart';
 import 'package:flutter_chat_app/presentation/providers/sessions_provider.dart';
 import 'package:flutter_chat_app/presentation/providers/settings_provider.dart';
 import 'package:flutter_chat_app/data/datasources/remote/gemini_service.dart';
@@ -319,7 +320,18 @@ class ChatNotifier extends StateNotifier<ChatState> {
     final currentSession = _ref.read(currentSessionProvider);
     if (currentSession == null) return;
 
+    // タイトルがデフォルトの場合、最初のユーザーメッセージからタイトルを生成
+    String title = currentSession.title;
+    if (title == '新規チャット' && state.messages.isNotEmpty) {
+      final firstUserMessage = state.messages.firstWhere(
+        (m) => m.role == Role.user,
+        orElse: () => state.messages.first,
+      );
+      title = SessionUtils.generateTitle(firstUserMessage.text);
+    }
+
     final updatedSession = currentSession.copyWith(
+      title: title,
       messages: state.messages,
       updatedAt: DateTime.now().millisecondsSinceEpoch,
     );

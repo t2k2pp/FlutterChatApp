@@ -9,11 +9,13 @@ import 'package:flutter_chat_app/presentation/widgets/chat/chat_message.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat/chat_input.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/model_selector.dart';
 import 'package:flutter_chat_app/presentation/dialogs/settings_dialog.dart';
+import 'package:flutter_chat_app/presentation/dialogs/project_manager_dialog.dart';
 import 'package:flutter_chat_app/core/utils/id_generator.dart';
 import 'package:flutter_chat_app/domain/models/chat_session.dart';
 import 'package:flutter_chat_app/domain/models/project.dart';
 import 'package:flutter_chat_app/domain/enums/role.dart';
 import 'package:flutter_chat_app/domain/enums/thinking_level.dart';
+import 'package:flutter_chat_app/data/services/export_service.dart';
 
 /// チャット画面（メインスクリーン）
 class ChatScreen extends ConsumerStatefulWidget {
@@ -125,7 +127,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 );
               },
               onOpenProjects: () {
-                // TODO: ProjectManagerを開く
+                showDialog(
+                  context: context,
+                  builder: (context) => const ProjectManagerDialog(),
+                );
               },
             ),
 
@@ -269,9 +274,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             // ダウンロードボタン
             IconButton(
               icon: const Icon(Icons.download),
-              onPressed: () {
-                // TODO: エクスポート機能
-              },
+              onPressed: () => _showExportDialog(context),
               tooltip: 'チャットをダウンロード',
             ),
           ],
@@ -313,6 +316,84 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               color: AppColors.textSecondary,
             ),
             textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showExportDialog(BuildContext context) {
+    final currentSession = ref.read(currentSessionProvider);
+    if (currentSession == null || currentSession.messages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('エクスポートするメッセージがありません')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('エクスポート形式を選択'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.folder_zip),
+              title: const Text('ZIP（Markdown）'),
+              subtitle: const Text('各メッセージを個別のMarkdownファイルとして'),
+              onTap: () async {
+                Navigator.pop(context);
+                try {
+                  await ExportService.exportToZip(
+                    currentSession.title,
+                    currentSession.messages,
+                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('ZIPファイルを共有しました')),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('エラー: $e')),
+                    );
+                  }
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.picture_as_pdf),
+              title: const Text('PDF'),
+              subtitle: const Text('すべてのメッセージを1つのPDFに'),
+              onTap: () async {
+                Navigator.pop(context);
+                try {
+                  await ExportService.exportToPDF(
+                    currentSession.title,
+                    currentSession.messages,
+                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('PDFファイルを共有しました')),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('エラー: $e')),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
           ),
         ],
       ),
