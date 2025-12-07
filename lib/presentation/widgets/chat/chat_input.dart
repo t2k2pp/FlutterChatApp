@@ -204,11 +204,13 @@ class _ChatInputState extends State<ChatInput> {
                         const SizedBox(width: 4),
                         
                         // Thinking Level
-                        _buildCompactButton(
-                          icon: Icons.bolt,
-                          label: 'Thinking ${_thinkingLevel.label}',
-                          isActive: _thinkingLevel != ThinkingLevel.off,
-                          onTap: () => _showThinkingPopup(context),
+                        Builder(
+                          builder: (context) => _buildCompactButton(
+                            icon: Icons.bolt,
+                            label: 'Thinking ${_thinkingLevel.label}',
+                            isActive: _thinkingLevel != ThinkingLevel.off,
+                            onTap: () => _showThinkingPopup(context),
+                          ),
                         ),
                         
                         // Web検索
@@ -311,9 +313,21 @@ class _ChatInputState extends State<ChatInput> {
   }
   
   void _showThinkingPopup(BuildContext context) {
+    final RenderBox button = context.findRenderObject() as RenderBox;
+    final RenderBox overlay = Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
+    final Offset buttonPosition = button.localToGlobal(Offset.zero, ancestor: overlay);
+    
+    // ボタンの上にポップアップを表示
+    final RelativeRect position = RelativeRect.fromLTRB(
+      buttonPosition.dx,
+      buttonPosition.dy - 150, // ボタンの上に表示
+      overlay.size.width - buttonPosition.dx - button.size.width,
+      overlay.size.height - buttonPosition.dy,
+    );
+    
     showMenu<ThinkingLevel>(
       context: context,
-      position: const RelativeRect.fromLTRB(100, 100, 100, 100),
+      position: position,
       items: ThinkingLevel.values.map((level) {
         return PopupMenuItem<ThinkingLevel>(
           value: level,
