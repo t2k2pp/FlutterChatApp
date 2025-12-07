@@ -285,19 +285,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               tooltip: 'メニュー',
             ),
 
-            // タイトル（モバイルでは非表示）
-            if (!isMobile)
-              const Text(
-                'Multi GenAI Chat',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-
-            const Spacer(),
-
-            // モデルセレクター
+            // モデルセレクター（左寄せ）
             Flexible(
               child: ModelSelector(
                 onManageModels: () {
@@ -309,13 +297,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
             ),
 
-            // ダウンロードボタン（モバイルでは非表示）
-            if (!isMobile)
-              IconButton(
-                icon: const Icon(Icons.download),
-                onPressed: () => _showExportDialog(context),
-                tooltip: 'チャットをダウンロード',
-              ),
+            const Spacer(),
+
+            // ダウンロードボタン（常に表示）
+            IconButton(
+              icon: const Icon(Icons.download),
+              onPressed: () => _showExportDialog(context),
+              tooltip: 'チャットをダウンロード',
+            ),
           ],
         ),
       ),
