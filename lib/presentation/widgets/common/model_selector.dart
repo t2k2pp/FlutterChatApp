@@ -38,11 +38,14 @@ class ModelSelector extends ConsumerWidget {
               children: [
                 _getProviderIcon(activeModel.provider),
                 const SizedBox(width: 8),
-                Text(
-                  activeModel.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                Flexible(
+                  child: Text(
+                    activeModel.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: 4),
