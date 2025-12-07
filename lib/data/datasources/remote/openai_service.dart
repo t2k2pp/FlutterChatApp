@@ -140,33 +140,45 @@ class OpenAIService {
       }
 
       // SSE (Server-Sent Events) をパース
-      await for (final chunk in streamedResponse.stream.transform(utf8.decoder).transform(const LineSplitter())) {
-        if (chunk.isEmpty || !chunk.startsWith('data: ')) continue;
+      // UTF-8デコーダーにallowMalformed: trueを設定して文字化けを防止
+      String buffer = '';
+      await for (final bytes in streamedResponse.stream) {
+        // バイトをUTF-8でデコード
+        buffer += utf8.decode(bytes, allowMalformed: true);
+        
+        // 完全な行を処理
+        while (buffer.contains('\n')) {
+          final lineEnd = buffer.indexOf('\n');
+          final line = buffer.substring(0, lineEnd).trim();
+          buffer = buffer.substring(lineEnd + 1);
+          
+          if (line.isEmpty || !line.startsWith('data: ')) continue;
 
-        final data = chunk.substring(6); // "data: " を削除
+          final data = line.substring(6); // "data: " を削除
 
-        if (data == '[DONE]') break;
+          if (data == '[DONE]') break;
 
-        try {
-          final json = jsonDecode(data);
-          final delta = json['choices']?[0]?['delta'];
+          try {
+            final json = jsonDecode(data);
+            final delta = json['choices']?[0]?['delta'];
 
-          if (delta?['content'] != null) {
-            yield delta['content'] as String;
+            if (delta?['content'] != null) {
+              yield delta['content'] as String;
+            }
+
+            // 使用量情報（最後のチャンクに含まれる場合がある）
+            if (json['usage'] != null && onUsage != null) {
+              final usage = json['usage'];
+              onUsage(TokenUsage(
+                promptTokens: usage['prompt_tokens'] ?? 0,
+                completionTokens: usage['completion_tokens'] ?? 0,
+                totalTokens: usage['total_tokens'] ?? 0,
+              ));
+            }
+          } catch (e) {
+            print('チャンクパースエラー: $e');
+            // エラーを無視して続行
           }
-
-          // 使用量情報（最後のチャンクに含まれる場合がある）
-          if (json['usage'] != null && onUsage != null) {
-            final usage = json['usage'];
-            onUsage(TokenUsage(
-              promptTokens: usage['prompt_tokens'] ?? 0,
-              completionTokens: usage['completion_tokens'] ?? 0,
-              totalTokens: usage['total_tokens'] ?? 0,
-            ));
-          }
-        } catch (e) {
-          print('チャンクパースエラー: $e');
-          // エラーを無視して続行
         }
       }
 
