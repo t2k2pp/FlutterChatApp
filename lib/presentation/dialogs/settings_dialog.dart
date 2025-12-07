@@ -24,11 +24,15 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
   @override
   Widget build(BuildContext context) {
     final settingsAsync = ref.watch(settingsProvider);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isMobile = screenWidth < 600;
 
     return Dialog(
+      insetPadding: EdgeInsets.all(isMobile ? 16 : 40),
       child: Container(
-        width: 800,
-        height: 600,
+        width: isMobile ? double.infinity : 800,
+        height: isMobile ? screenHeight * 0.85 : 600,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           color: Colors.white,
@@ -63,24 +67,100 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
 
             // 本体
             Expanded(
-              child: Row(
-                children: [
-                  // タブナビゲーション
-                  _buildTabNavigation(),
+              child: isMobile
+                  ? Column(
+                      children: [
+                        // タブナビゲーション（横並び）
+                        _buildMobileTabNavigation(),
+                        // タブコンテンツ
+                        Expanded(
+                          child: settingsAsync.when(
+                            data: (settings) => _buildTabContent(settings),
+                            loading: () => const Center(child: CircularProgressIndicator()),
+                            error: (error, _) => Center(child: Text('エラー: $error')),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        // タブナビゲーション
+                        _buildTabNavigation(),
 
-                  // タブコンテンツ
-                  Expanded(
-                    child: settingsAsync.when(
-                      data: (settings) => _buildTabContent(settings),
-                      loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (error, _) => Center(child: Text('エラー: $error')),
+                        // タブコンテンツ
+                        Expanded(
+                          child: settingsAsync.when(
+                            data: (settings) => _buildTabContent(settings),
+                            loading: () => const Center(child: CircularProgressIndicator()),
+                            error: (error, _) => Center(child: Text('エラー: $error')),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+  
+  Widget _buildMobileTabNavigation() {
+    final tabs = [
+      {'icon': Icons.auto_awesome, 'label': 'モデル'},
+      {'icon': Icons.search, 'label': '検索'},
+      {'icon': Icons.psychology, 'label': 'Watson'},
+      {'icon': Icons.volume_up, 'label': 'TTS'},
+    ];
+
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.border)),
+      ),
+      child: Row(
+        children: tabs.asMap().entries.map((entry) {
+          final index = entry.key;
+          final tab = entry.value;
+          final isSelected = _selectedTab == index;
+
+          return Expanded(
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  _selectedTab = index;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: isSelected ? AppColors.primary : Colors.transparent,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      tab['icon'] as IconData,
+                      size: 20,
+                      color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      tab['label'] as String,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
