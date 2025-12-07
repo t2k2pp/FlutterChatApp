@@ -140,17 +140,19 @@ class OpenAIService {
       }
 
       // SSE (Server-Sent Events) をパース
-      // UTF-8デコーダーにallowMalformed: trueを設定して文字化けを防止
-      String buffer = '';
+      // Utf8Decoderでストリーミングデコード
+      final utf8Decoder = const Utf8Decoder(allowMalformed: true);
+      String lineBuffer = '';
+      
       await for (final bytes in streamedResponse.stream) {
-        // バイトをUTF-8でデコード
-        buffer += utf8.decode(bytes, allowMalformed: true);
+        // UTF-8デコード（不正なバイトは置換文字に）
+        lineBuffer += utf8Decoder.convert(bytes);
         
         // 完全な行を処理
-        while (buffer.contains('\n')) {
-          final lineEnd = buffer.indexOf('\n');
-          final line = buffer.substring(0, lineEnd).trim();
-          buffer = buffer.substring(lineEnd + 1);
+        while (lineBuffer.contains('\n')) {
+          final lineEnd = lineBuffer.indexOf('\n');
+          final line = lineBuffer.substring(0, lineEnd).trim();
+          lineBuffer = lineBuffer.substring(lineEnd + 1);
           
           if (line.isEmpty || !line.startsWith('data: ')) continue;
 
