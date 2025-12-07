@@ -108,34 +108,35 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     });
 
     return Scaffold(
-      body: Row(
-        children: [
-          // サイドバー
-          if (_isSidebarOpen)
-            Sidebar(
-              isOpen: _isSidebarOpen,
-              onClose: () {
-                setState(() {
-                  _isSidebarOpen = false;
-                });
-              },
-              onOpenSettings: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => const SettingsDialog(),
-                );
-              },
-              onOpenProjects: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => const ProjectManagerDialog(),
-                );
-              },
-            ),
+      body: SafeArea(
+        child: Row(
+          children: [
+            // サイドバー
+            if (_isSidebarOpen)
+              Sidebar(
+                isOpen: _isSidebarOpen,
+                onClose: () {
+                  setState(() {
+                    _isSidebarOpen = false;
+                  });
+                },
+                onOpenSettings: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const SettingsDialog(),
+                  );
+                },
+                onOpenProjects: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const ProjectManagerDialog(),
+                  );
+                },
+              ),
 
-          // メインコンテンツ
-          Expanded(
-            child: Column(
+            // メインコンテンツ
+            Expanded(
+              child: Column(
               children: [
                 // ヘッダー
                 _buildHeader(settingsAsync.asData?.value.projects),
@@ -219,6 +220,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
