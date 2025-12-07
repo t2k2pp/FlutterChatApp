@@ -5,6 +5,7 @@ import 'package:flutter_chat_app/domain/models/model_config.dart';
 import 'package:flutter_chat_app/domain/enums/ai_provider.dart';
 import 'package:flutter_chat_app/domain/enums/watson_intervention_level.dart';
 import 'package:flutter_chat_app/presentation/providers/settings_provider.dart';
+import 'package:flutter_chat_app/presentation/dialogs/model_edit_dialog.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/utils/id_generator.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
@@ -175,7 +176,13 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
                   IconButton(
                     icon: const Icon(Icons.edit),
                     onPressed: () {
-                      // TODO: モデル編集
+                      showDialog(
+                        context: context,
+                        builder: (context) => ModelEditDialog(
+                          existingModel: model,
+                          settings: settings,
+                        ),
+                      );
                     },
                   ),
                 ],
@@ -186,7 +193,13 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
         const SizedBox(height: 16),
         ElevatedButton.icon(
           onPressed: () {
-            // TODO: モデル追加
+            showDialog(
+              context: context,
+              builder: (context) => ModelEditDialog(
+                existingModel: null,
+                settings: settings,
+              ),
+            );
           },
           icon: const Icon(Icons.add),
           label: const Text('モデルを追加'),
