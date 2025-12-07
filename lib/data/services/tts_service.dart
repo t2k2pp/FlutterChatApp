@@ -1,4 +1,5 @@
-import 'package:flutter_tts/flutter_tts.dart';
+// TTS Service - Stub implementation for cross-platform compatibility
+// TODO: Re-enable flutter_tts when Android 16 compatibility is fixed
 
 /// 音声オプション
 class VoiceOption {
@@ -13,64 +14,38 @@ class VoiceOption {
   });
 }
 
-/// TTSサービス
+/// TTSサービス（スタブ実装）
 class TTSService {
-  final FlutterTts _tts = FlutterTts();
   List<VoiceOption> _availableVoices = [];
   bool _isSpeaking = false;
+  void Function()? _completionHandler;
 
   /// 初期化
   Future<void> initialize() async {
-    await _loadVoices();
-  }
-
-  /// 利用可能な音声を読み込み
-  Future<void> _loadVoices() async {
-    try {
-      final voices = await _tts.getVoices;
-      if (voices != null) {
-        _availableVoices = (voices as List).map((voice) {
-          return VoiceOption(
-            name: voice['name'] ?? 'Unknown',
-            locale: voice['locale'] ?? 'en-US',
-            voiceURI: voice['name'],
-          );
-        }).toList();
-      }
-    } catch (e) {
-      print('音声読み込みエラー: $e');
-    }
+    // Web版はブラウザのSpeechSynthesis APIを使用可能
+    // モバイル版は現在スタブ
+    _availableVoices = [
+      VoiceOption(name: 'Default', locale: 'ja-JP', voiceURI: 'default'),
+    ];
   }
 
   /// 利用可能な音声を取得
   List<VoiceOption> get availableVoices => _availableVoices;
 
-  /// テキストを読み上げ
+  /// テキストを読み上げ（スタブ - 何もしない）
   Future<void> speak(
     String text, {
     String? voiceURI,
     double speed = 1.0,
   }) async {
-    try {
-      // 音声を設定
-      if (voiceURI != null) {
-        await _tts.setVoice({'name': voiceURI, 'locale': 'ja-JP'});
-      }
-
-      // 速度を設定
-      await _tts.setSpeechRate(speed);
-
-      _isSpeaking = true;
-      await _tts.speak(text);
-    } catch (e) {
-      print('TTSエラー: $e');
-      _isSpeaking = false;
-    }
+    // TODO: Implement when flutter_tts is fixed
+    print('TTS (stub): $text');
+    _isSpeaking = false;
+    _completionHandler?.call();
   }
 
   /// 読み上げを停止
   Future<void> stop() async {
-    await _tts.stop();
     _isSpeaking = false;
   }
 
@@ -79,17 +54,11 @@ class TTSService {
 
   /// 完了コールバックを設定
   void setCompletionHandler(void Function() onComplete) {
-    _tts.setCompletionHandler(() {
-      _isSpeaking = false;
-      onComplete();
-    });
+    _completionHandler = onComplete;
   }
 
   /// エラーコールバックを設定
   void setErrorHandler(void Function(String) onError) {
-    _tts.setErrorHandler((msg) {
-      _isSpeaking = false;
-      onError(msg);
-    });
+    // Stub - no-op
   }
 }
