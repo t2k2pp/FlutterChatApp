@@ -38,7 +38,6 @@ class _ChatInputState extends State<ChatInput> {
   bool _deepResearch = false;
   ThinkingLevel _thinkingLevel = ThinkingLevel.off;
   bool _watsonEnabled = false;
-  bool _showOptions = false;
 
   @override
   void dispose() {
@@ -124,91 +123,6 @@ class _ChatInputState extends State<ChatInput> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // オプションボタン群
-            if (_showOptions)
-              Container(
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceAlt,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Web検索
-                    if (widget.searchEnabled)
-                      CheckboxListTile(
-                        title: const Text('Web検索'),
-                        subtitle: const Text('SearXNGで検索'),
-                        value: _webSearch,
-                        onChanged: (value) {
-                          setState(() {
-                            _webSearch = value ?? false;
-                            if (!_webSearch) _deepResearch = false;
-                          });
-                        },
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-
-                    // Deep Research
-                    if (widget.searchEnabled && _webSearch)
-                      CheckboxListTile(
-                        title: const Text('Deep Research'),
-                        subtitle: const Text('反復的な深い調査'),
-                        value: _deepResearch,
-                        onChanged: (value) {
-                          setState(() {
-                            _deepResearch = value ?? false;
-                          });
-                        },
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-
-                    const Divider(),
-
-                    // Thinking Level
-                    ListTile(
-                      title: const Text('思考レベル'),
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    Wrap(
-                      spacing: 8,
-                      children: ThinkingLevel.values.map((level) {
-                        return ChoiceChip(
-                          label: Text(level.label),
-                          selected: _thinkingLevel == level,
-                          onSelected: (selected) {
-                            setState(() {
-                              _thinkingLevel = level;
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-
-                    const Divider(),
-
-                    // Watson
-                    CheckboxListTile(
-                      title: const Text('Watson Observer'),
-                      subtitle: const Text('AIアドバイザーを有効化'),
-                      value: _watsonEnabled,
-                      onChanged: (value) {
-                        setState(() {
-                          _watsonEnabled = value ?? false;
-                        });
-                      },
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ],
-                ),
-              ),
-
             // 添付ファイル表示
             if (_attachments.isNotEmpty)
               Container(
@@ -237,79 +151,191 @@ class _ChatInputState extends State<ChatInput> {
               ),
 
             // 入力エリア
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // オプションボタン
-                IconButton(
-                  icon: Icon(
-                    _showOptions ? Icons.tune : Icons.tune_outlined,
-                    color: _showOptions ? AppColors.primary : null,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _showOptions = !_showOptions;
-                    });
-                  },
-                  tooltip: 'オプション',
-                ),
-
-                // 添付ファイルボタン
-                IconButton(
-                  icon: const Icon(Icons.attach_file),
-                  onPressed: widget.isLoading ? null : _pickFile,
-                  tooltip: 'ファイルを添付',
-                ),
-
-                // テキスト入力
-                Expanded(
-                  child: TextField(
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.border),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  // テキスト入力
+                  TextField(
                     controller: _controller,
                     maxLines: null,
                     enabled: !widget.isLoading,
-                    decoration: InputDecoration(
-                      hintText: 'メッセージを入力...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
+                    decoration: const InputDecoration(
+                      hintText: 'How can I help you today?',
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(16),
                     ),
                     onSubmitted: (_) => _send(),
                   ),
-                ),
-
-                const SizedBox(width: 8),
-
-                // 送信ボタン
-                IconButton.filled(
-                  icon: widget.isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+                  
+                  // オプション行（コンパクト版）
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: const BoxDecoration(
+                      border: Border(top: BorderSide(color: AppColors.border)),
+                    ),
+                    child: Row(
+                      children: [
+                        // 添付ファイルボタン
+                        _buildCompactButton(
+                          icon: Icons.attach_file,
+                          label: null,
+                          isActive: false,
+                          onTap: widget.isLoading ? null : _pickFile,
+                        ),
+                        
+                        const SizedBox(width: 4),
+                        
+                        // Watson Observer トグル
+                        _buildCompactButton(
+                          icon: Icons.psychology_outlined,
+                          label: 'Watson',
+                          isActive: _watsonEnabled,
+                          onTap: () {
+                            setState(() {
+                              _watsonEnabled = !_watsonEnabled;
+                            });
+                          },
+                        ),
+                        
+                        const SizedBox(width: 4),
+                        
+                        // Thinking Level
+                        _buildCompactButton(
+                          icon: Icons.bolt,
+                          label: 'Thinking ${_thinkingLevel.label}',
+                          isActive: _thinkingLevel != ThinkingLevel.off,
+                          onTap: () => _showThinkingPopup(context),
+                        ),
+                        
+                        // Web検索
+                        if (widget.searchEnabled) ...[
+                          const SizedBox(width: 4),
+                          _buildCompactButton(
+                            icon: Icons.language,
+                            label: 'Search',
+                            isActive: _webSearch,
+                            onTap: () {
+                              setState(() {
+                                _webSearch = !_webSearch;
+                                if (!_webSearch) _deepResearch = false;
+                              });
+                            },
                           ),
-                        )
-                      : const Icon(Icons.send),
-                  onPressed: widget.isLoading ? null : _send,
-                  tooltip: '送信',
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: Colors.grey[300],
+                        ],
+                        
+                        // Deep Research
+                        if (widget.searchEnabled && _webSearch) ...[
+                          const SizedBox(width: 4),
+                          _buildCompactButton(
+                            icon: Icons.science_outlined,
+                            label: 'Deep Research',
+                            isActive: _deepResearch,
+                            onTap: () {
+                              setState(() {
+                                _deepResearch = !_deepResearch;
+                              });
+                            },
+                          ),
+                        ],
+                        
+                        const Spacer(),
+                        
+                        // 送信ボタン
+                        IconButton(
+                          icon: widget.isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.send),
+                          onPressed: widget.isLoading ? null : _send,
+                          style: IconButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+  
+  Widget _buildCompactButton({
+    required IconData icon,
+    String? label,
+    required bool isActive,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isActive ? AppColors.primary : AppColors.textSecondary,
+            ),
+            if (label != null) ...[
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isActive ? AppColors.primary : AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _showThinkingPopup(BuildContext context) {
+    showMenu<ThinkingLevel>(
+      context: context,
+      position: const RelativeRect.fromLTRB(100, 100, 100, 100),
+      items: ThinkingLevel.values.map((level) {
+        return PopupMenuItem<ThinkingLevel>(
+          value: level,
+          child: Row(
+            children: [
+              if (_thinkingLevel == level)
+                const Icon(Icons.check, size: 16, color: AppColors.primary)
+              else
+                const SizedBox(width: 16),
+              const SizedBox(width: 8),
+              Text(level.label),
+            ],
+          ),
+        );
+      }).toList(),
+    ).then((value) {
+      if (value != null) {
+        setState(() {
+          _thinkingLevel = value;
+        });
+      }
+    });
   }
 }
 
