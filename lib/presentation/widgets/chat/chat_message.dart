@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_chat_app/domain/models/message.dart';
 import 'package:flutter_chat_app/domain/enums/role.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
@@ -100,10 +101,17 @@ class _ChatMessageState extends State<ChatMessage> {
                   data: widget.message.text,
                   selectable: true,
                   styleSheet: MarkdownStyleSheet(
-                    p: const TextStyle(fontSize: 14, height: 1.5),
+                    p: GoogleFonts.notoSansJp(
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                    h1: GoogleFonts.notoSansJp(fontSize: 24, fontWeight: FontWeight.bold),
+                    h2: GoogleFonts.notoSansJp(fontSize: 20, fontWeight: FontWeight.bold),
+                    h3: GoogleFonts.notoSansJp(fontSize: 18, fontWeight: FontWeight.bold),
+                    listBullet: GoogleFonts.notoSansJp(fontSize: 14),
                     code: TextStyle(
                       backgroundColor: Colors.grey[200],
-                      fontFamily: 'monospace',
+                      fontFamily: GoogleFonts.notoSansJp().fontFamily,
                     ),
                     codeblockDecoration: BoxDecoration(
                       color: Colors.grey[100],
