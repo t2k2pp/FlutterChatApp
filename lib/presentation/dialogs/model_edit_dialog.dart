@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:flutter_chat_app/domain/models/model_config.dart';
 import 'package:flutter_chat_app/domain/models/user_settings.dart';
 import 'package:flutter_chat_app/domain/enums/ai_provider.dart';
@@ -32,6 +34,11 @@ class _ModelEditDialogState extends ConsumerState<ModelEditDialog> {
   late double _temperature;
   late double _topP;
   late int _topK;
+  
+  // モデル一覧取得用
+  List<String> _availableModels = [];
+  bool _isLoadingModels = false;
+  String? _modelLoadError;
 
   @override
   void initState() {
@@ -57,6 +64,55 @@ class _ModelEditDialogState extends ConsumerState<ModelEditDialog> {
     _endpointController.dispose();
     _systemInstructionController.dispose();
     super.dispose();
+  }
+  
+  Future<void> _fetchModels() async {
+    final endpoint = _endpointController.text.trim();
+    if (endpoint.isEmpty) return;
+    
+    setState(() {
+      _isLoadingModels = true;
+      _modelLoadError = null;
+      _availableModels = [];
+    });
+    
+    try {
+      final modelsUrl = endpoint.endsWith('/') 
+          ? '${endpoint}models' 
+          : '$endpoint/models';
+      
+      final response = await http.get(
+        Uri.parse(modelsUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          if (_apiKeyController.text.isNotEmpty)
+            'Authorization': 'Bearer ${_apiKeyController.text}',
+        },
+      ).timeout(const Duration(seconds: 10));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final models = (data['data'] as List?)
+            ?.map((m) => m['id']?.toString() ?? '')
+            .where((id) => id.isNotEmpty)
+            .toList() ?? [];
+        
+        setState(() {
+          _availableModels = models;
+          _isLoadingModels = false;
+        });
+      } else {
+        setState(() {
+          _modelLoadError = 'エラー: ${response.statusCode}';
+          _isLoadingModels = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _modelLoadError = '接続エラー: $e';
+        _isLoadingModels = false;
+      });
+    }
   }
 
   @override
@@ -103,7 +159,7 @@ class _ModelEditDialogState extends ConsumerState<ModelEditDialog> {
                       controller: _nameController,
                       decoration: const InputDecoration(
                         labelText: 'モデル名',
-                        hintText: 'Gemma 3n-e4b (LMStudio)',
+                        hintText: '',
                       ),
                     ),
 
@@ -125,6 +181,7 @@ class _ModelEditDialogState extends ConsumerState<ModelEditDialog> {
                         if (value != null) {
                           setState(() {
                             _selectedProvider = value;
+                            _availableModels = [];
                           });
                         }
                       },
@@ -132,26 +189,84 @@ class _ModelEditDialogState extends ConsumerState<ModelEditDialog> {
 
                     const SizedBox(height: 16),
 
-                    // モデルID
+                    // エンドポイント（OpenAI互換/Azure用）
+                    if (_selectedProvider != AIProvider.gemini) ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _endpointController,
+                              decoration: const InputDecoration(
+                                labelText: 'エンドポイント',
+                                hintText: 'http://192.168.1.24:11437/v1',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: _isLoadingModels ? null : _fetchModels,
+                            child: _isLoadingModels
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Text('モデル取得'),
+                          ),
+                        ],
+                      ),
+                      if (_modelLoadError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            _modelLoadError!,
+                            style: const TextStyle(color: AppColors.error, fontSize: 12),
+                          ),
+                        ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // モデルID（ドロップダウン + 手入力）
+                    if (_availableModels.isNotEmpty) ...[
+                      DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(
+                          labelText: 'モデルを選択',
+                        ),
+                        value: _availableModels.contains(_modelIdController.text)
+                            ? _modelIdController.text
+                            : null,
+                        items: _availableModels.map((modelId) {
+                          return DropdownMenuItem(
+                            value: modelId,
+                            child: Text(modelId),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _modelIdController.text = value;
+                              // モデル名も自動設定（空の場合）
+                              if (_nameController.text.isEmpty) {
+                                _nameController.text = value;
+                              }
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'または手動で入力:',
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
                     TextField(
                       controller: _modelIdController,
                       decoration: const InputDecoration(
                         labelText: 'モデルID',
-                        hintText: 'gemma-2-27b-it',
+                        hintText: '',
                       ),
                     ),
-
-                    const SizedBox(height: 16),
-
-                    // エンドポイント（OpenAI互換/Azure用）
-                    if (_selectedProvider != AIProvider.gemini)
-                      TextField(
-                        controller: _endpointController,
-                        decoration: const InputDecoration(
-                          labelText: 'エンドポイント',
-                          hintText: 'http://localhost:1234/v1',
-                        ),
-                      ),
 
                     const SizedBox(height: 16),
 
