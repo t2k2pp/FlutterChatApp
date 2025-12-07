@@ -4,6 +4,7 @@ import 'package:flutter_chat_app/domain/models/model_config.dart';
 import 'package:flutter_chat_app/domain/models/token_usage.dart';
 import 'package:flutter_chat_app/domain/models/message_image.dart';
 import 'package:flutter_chat_app/domain/enums/role.dart' as app_role;
+import 'dart:convert';
 
 /// Gemini APIサービス
 class GeminiService {
@@ -59,7 +60,7 @@ class GeminiService {
       // 履歴から画像を再読み込み
       if (msg.images != null && msg.images!.isNotEmpty) {
         for (final img in msg.images!) {
-          parts.add(DataPart(img.mimeType, img.base64.codeUnits));
+          parts.add(DataPart(img.mimeType,  base64.decode(img.base64)));
         }
       }
 
@@ -96,7 +97,7 @@ class GeminiService {
 
       if (images != null && images.isNotEmpty) {
         for (final img in images) {
-          parts.add(DataPart(img.mimeType, img.base64.codeUnits));
+          parts.add(DataPart(img.mimeType, base64.decode(img.base64)));
         }
       }
 
