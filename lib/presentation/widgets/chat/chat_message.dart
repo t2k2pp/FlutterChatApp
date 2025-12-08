@@ -100,7 +100,7 @@ class _ChatMessageState extends State<ChatMessage> {
                 // メッセージテキスト
                 MarkdownBody(
                   data: widget.message.text,
-                  selectable: !kIsWeb, // WebではSelectableTextがCanvasKitフォントエラーを起こすため無効化
+                  selectable: !kIsWeb, // Web版ではselectableを無効化（参考アプリと同様）
                   styleSheet: MarkdownStyleSheet(
                     p: GoogleFonts.notoSansJp(
                       fontSize: 14,
