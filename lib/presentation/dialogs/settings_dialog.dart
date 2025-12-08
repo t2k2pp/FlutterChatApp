@@ -376,22 +376,31 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
           ),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: settings.subModelId,
-          decoration: const InputDecoration(
-            hintText: 'Watsonが使用するモデルを選択',
-          ),
-          items: settings.models.map((model) {
-            return DropdownMenuItem(
-              value: model.id,
-              child: Text(model.name),
+        Builder(
+          builder: (context) {
+            // subModelIdが有効かチェック
+            final validSubModelId = settings.models.any((m) => m.id == settings.subModelId)
+                ? settings.subModelId
+                : (settings.models.isNotEmpty ? settings.models.first.id : null);
+            
+            return DropdownButtonFormField<String>(
+              value: validSubModelId,
+              decoration: const InputDecoration(
+                hintText: 'Watsonが使用するモデルを選択',
+              ),
+              items: settings.models.map((model) {
+                return DropdownMenuItem(
+                  value: model.id,
+                  child: Text(model.name),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  final newSettings = settings.copyWith(subModelId: value);
+                  ref.read(settingsProvider.notifier).updateSettings(newSettings);
+                }
+              },
             );
-          }).toList(),
-          onChanged: (value) {
-            if (value != null) {
-              final newSettings = settings.copyWith(subModelId: value);
-              ref.read(settingsProvider.notifier).updateSettings(newSettings);
-            }
           },
         ),
         
@@ -510,9 +519,16 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
                 newActiveId = newModels.first.id;
               }
               
+              // サブモデル（Watson用）が削除された場合も更新
+              String newSubModelId = settings.subModelId;
+              if (model.id == settings.subModelId && newModels.isNotEmpty) {
+                newSubModelId = newModels.first.id;
+              }
+              
               final newSettings = settings.copyWith(
                 models: List<ModelConfig>.from(newModels),
                 activeModelId: newActiveId,
+                subModelId: newSubModelId,
               );
               ref.read(settingsProvider.notifier).updateSettings(newSettings);
               Navigator.pop(context);
