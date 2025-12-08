@@ -5,6 +5,7 @@ import 'package:flutter_chat_app/domain/models/user_settings.dart';
 import 'package:flutter_chat_app/presentation/providers/settings_provider.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/utils/id_generator.dart';
+import 'package:flutter_chat_app/data/services/prompt_optimizer_service.dart';
 
 /// プロジェクト/Gems管理ダイアログ
 class ProjectManagerDialog extends ConsumerStatefulWidget {
@@ -16,6 +17,8 @@ class ProjectManagerDialog extends ConsumerStatefulWidget {
 
 class _ProjectManagerDialogState extends ConsumerState<ProjectManagerDialog> {
   Project? _selectedProject;
+  bool _isOptimizing = false;
+  final PromptOptimizerService _optimizerService = PromptOptimizerService();
 
   @override
   Widget build(BuildContext context) {
@@ -244,6 +247,26 @@ class _ProjectManagerDialogState extends ConsumerState<ProjectManagerDialog> {
             ),
           ),
 
+          const SizedBox(height: 8),
+
+          // プロンプト最適化ボタン
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: _isOptimizing || project.customInstruction.isEmpty
+                  ? null
+                  : () => _optimizePrompt(settings, project),
+              icon: _isOptimizing
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.auto_fix_high, size: 18),
+              label: Text(_isOptimizing ? '最適化中...' : 'AIで最適化'),
+            ),
+          ),
+
           const SizedBox(height: 24),
 
           // 知識ベース
@@ -385,5 +408,52 @@ class _ProjectManagerDialogState extends ConsumerState<ProjectManagerDialog> {
         ],
       ),
     );
+  }
+
+  /// プロンプトをAIで最適化
+  Future<void> _optimizePrompt(UserSettings settings, Project project) async {
+    if (project.customInstruction.isEmpty) return;
+
+    setState(() {
+      _isOptimizing = true;
+    });
+
+    try {
+      // アクティブなモデル設定を取得
+      final activeModel = settings.models.firstWhere(
+        (m) => m.id == settings.activeModelId,
+        orElse: () => settings.models.first,
+      );
+
+      final optimized = await _optimizerService.optimizePrompt(
+        project.customInstruction,
+        activeModel,
+      );
+
+      if (optimized.isNotEmpty && optimized != project.customInstruction) {
+        _updateProject(
+          settings,
+          project.copyWith(customInstruction: optimized),
+        );
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('プロンプトを最適化しました')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('最適化エラー: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isOptimizing = false;
+        });
+      }
+    }
   }
 }
