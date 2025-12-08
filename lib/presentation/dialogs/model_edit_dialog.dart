@@ -229,6 +229,7 @@ class _ModelEditDialogState extends ConsumerState<ModelEditDialog> {
                     // モデルID（ドロップダウン + 手入力）
                     if (_availableModels.isNotEmpty) ...[
                       DropdownButtonFormField<String>(
+                        isExpanded: true,
                         decoration: const InputDecoration(
                           labelText: 'モデルを選択',
                         ),
@@ -238,7 +239,11 @@ class _ModelEditDialogState extends ConsumerState<ModelEditDialog> {
                         items: _availableModels.map((modelId) {
                           return DropdownMenuItem(
                             value: modelId,
-                            child: Text(modelId),
+                            child: Text(
+                              modelId,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           );
                         }).toList(),
                         onChanged: (value) {
