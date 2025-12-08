@@ -5,7 +5,18 @@ import 'package:flutter_chat_app/domain/models/model_usage_stats.dart';
 import 'package:flutter_chat_app/domain/models/token_usage.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
 
-/// ローカルストレージサービス（Hiveを使用）
+/// LinkedMapをMap<String, dynamic>に再帰的に変換
+dynamic _deepConvert(dynamic value) {
+  if (value is Map) {
+    return Map<String, dynamic>.fromEntries(
+      value.entries.map((e) => MapEntry(e.key.toString(), _deepConvert(e.value))),
+    );
+  } else if (value is List) {
+    return value.map((e) => _deepConvert(e)).toList();
+  }
+  return value;
+}
+
 class DatabaseService {
   static const String _settingsBox = 'settings';
   static const String _sessionsBox = 'sessions';
@@ -32,7 +43,7 @@ class DatabaseService {
     }
     
     try {
-      return UserSettings.fromJson(Map<String, dynamic>.from(data));
+      return UserSettings.fromJson(_deepConvert(data) as Map<String, dynamic>);
     } catch (e) {
       print('設定の読み込みエラー: $e');
       return defaultSettings;
@@ -54,7 +65,7 @@ class DatabaseService {
       try {
         final data = box.get(key);
         if (data != null) {
-          final session = ChatSession.fromJson(Map<String, dynamic>.from(data));
+          final session = ChatSession.fromJson(_deepConvert(data) as Map<String, dynamic>);
           sessions.add(session);
         }
       } catch (e) {

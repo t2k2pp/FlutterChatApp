@@ -11,6 +11,7 @@ import 'package:flutter_chat_app/domain/enums/role.dart' as app_role;
 class OpenAIService {
   ModelConfig? _config;
   List<Map<String, dynamic>> _history = [];
+  final http.Client _client = http.Client();
 
   /// 設定を更新
   void updateConfig(ModelConfig config) {
@@ -132,58 +133,49 @@ class OpenAIService {
       request.headers.addAll(headers);
       request.body = jsonEncode(body);
 
-      final streamedResponse = await request.send();
+      final streamedResponse = await _client.send(request);
 
       if (streamedResponse.statusCode != 200) {
         final errorBody = await streamedResponse.stream.bytesToString();
         throw Exception('OpenAI APIエラー: ${streamedResponse.statusCode} - $errorBody');
       }
 
-      // SSE (Server-Sent Events) をパース
-      // React版と同様にStreamingデコーダーを使用
-      final decoder = utf8.decoder.bind(streamedResponse.stream);
-      String buffer = '';
-
-      await for (final chunk in decoder) {
-        buffer += chunk;
-        
-        // 完全な行を処理
-        while (buffer.contains('\n')) {
-          final lineEnd = buffer.indexOf('\n');
-          final line = buffer.substring(0, lineEnd).trim();
-          buffer = buffer.substring(lineEnd + 1);
-          
-          if (line.isEmpty || !line.startsWith('data: ')) continue;
-
-          final data = line.substring(6); // "data: " を削除
-
-          if (data == '[DONE]') break;
-
-          try {
-            final json = jsonDecode(data);
-            final delta = json['choices']?[0]?['delta'];
-
-            if (delta?['content'] != null) {
-              yield delta['content'] as String;
+      // 参考アプリと同じ方式: utf8.decoderでtransform
+      await for (final chunk in streamedResponse.stream.transform(utf8.decoder)) {
+        // SSEフォーマットをパース
+        final lines = chunk.split('\n');
+        for (final line in lines) {
+          if (line.startsWith('data: ')) {
+            final data = line.substring(6).trim();
+            if (data == '[DONE]') {
+              return;
             }
-
-            // 使用量情報（最後のチャンクに含まれる場合がある）
-            if (json['usage'] != null && onUsage != null) {
-              final usage = json['usage'];
-              onUsage(TokenUsage(
-                promptTokens: usage['prompt_tokens'] ?? 0,
-                completionTokens: usage['completion_tokens'] ?? 0,
-                totalTokens: usage['total_tokens'] ?? 0,
-              ));
+            if (data.isNotEmpty) {
+              try {
+                final json = jsonDecode(data);
+                final delta = json['choices']?[0]?['delta'];
+                if (delta != null && delta['content'] != null) {
+                  yield delta['content'] as String;
+                }
+                
+                // 使用量情報
+                if (json['usage'] != null && onUsage != null) {
+                  final usage = json['usage'];
+                  onUsage(TokenUsage(
+                    promptTokens: usage['prompt_tokens'] ?? 0,
+                    completionTokens: usage['completion_tokens'] ?? 0,
+                    totalTokens: usage['total_tokens'] ?? 0,
+                  ));
+                }
+              } catch (e) {
+                // JSONパースエラーは無視
+              }
             }
-          } catch (e) {
-            print('チャンクパースエラー: $e');
-            // エラーを無視して続行
           }
         }
       }
 
-      // 履歴に追加（次回のため）
+      // 履歴に追加
       _history.add(currentMessage);
     } catch (error) {
       print('OpenAI APIエラー: $error');

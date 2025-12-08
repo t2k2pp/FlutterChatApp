@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -99,7 +100,7 @@ class _ChatMessageState extends State<ChatMessage> {
                 // メッセージテキスト
                 MarkdownBody(
                   data: widget.message.text,
-                  selectable: true,
+                  selectable: !kIsWeb, // WebではSelectableTextがCanvasKitフォントエラーを起こすため無効化
                   styleSheet: MarkdownStyleSheet(
                     p: GoogleFonts.notoSansJp(
                       fontSize: 14,

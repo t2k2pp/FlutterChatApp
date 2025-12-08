@@ -37,6 +37,19 @@ class ModelType {
 
 /// デフォルトのモデル設定
 final List<ModelConfig> defaultModels = [
+  // LMStudio (ローカルLLM) - 開発時のデフォルト
+  ModelConfig(
+    id: 'lmstudio-local',
+    name: 'LMStudio (Local)',
+    provider: AIProvider.openaiCompatible,
+    modelId: 'local-model',
+    endpoint: 'http://localhost:1234/v1',
+    systemInstruction: defaultSystemInstruction,
+    temperature: 0.7,
+    topP: 0.95,
+    topK: 64,
+    capabilities: const [],
+  ),
   ModelConfig(
     id: 'default-gemini-flash',
     name: 'Gemini 2.0 Flash',
@@ -79,7 +92,7 @@ const defaultTTSConfig = TTSConfig(
 /// デフォルトのユーザー設定
 final defaultSettings = UserSettings(
   models: defaultModels,
-  activeModelId: 'default-gemini-flash',
+  activeModelId: 'lmstudio-local', // デフォルトでLMStudioを使用
   subModelId: 'default-gemini-flash', // デフォルトのWatsonモデル
   watsonInterventionLevel: WatsonInterventionLevel.medium,
   projects: const [],
@@ -87,3 +100,4 @@ final defaultSettings = UserSettings(
   tts: defaultTTSConfig,
   timeAwareness: true,
 );
+
