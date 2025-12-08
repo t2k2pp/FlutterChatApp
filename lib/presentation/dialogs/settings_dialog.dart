@@ -20,12 +20,12 @@ class SettingsDialog extends ConsumerStatefulWidget {
 
 class _SettingsDialogState extends ConsumerState<SettingsDialog> {
   int _selectedTab = 0;
-  late TextEditingController _searchBaseUrlController;
+  TextEditingController? _searchBaseUrlController;
   bool _searchBaseUrlInitialized = false;
 
   @override
   void dispose() {
-    _searchBaseUrlController.dispose();
+    _searchBaseUrlController?.dispose();
     super.dispose();
   }
 
@@ -337,7 +337,7 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
               labelText: 'SearXNG  Base URL',
               hintText: 'http://localhost:8080',
             ),
-            controller: _searchBaseUrlController,
+            controller: _searchBaseUrlController!,
             onChanged: (value) {
               final newSettings = settings.copyWith(
                 search: settings.search.copyWith(baseUrl: value),
