@@ -20,6 +20,14 @@ class SettingsDialog extends ConsumerStatefulWidget {
 
 class _SettingsDialogState extends ConsumerState<SettingsDialog> {
   int _selectedTab = 0;
+  late TextEditingController _searchBaseUrlController;
+  bool _searchBaseUrlInitialized = false;
+
+  @override
+  void dispose() {
+    _searchBaseUrlController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -295,6 +303,12 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
   }
 
   Widget _buildSearchTab(UserSettings settings) {
+    // コントローラーを1度だけ初期化
+    if (!_searchBaseUrlInitialized) {
+      _searchBaseUrlController = TextEditingController(text: settings.search.baseUrl);
+      _searchBaseUrlInitialized = true;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -323,7 +337,7 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog> {
               labelText: 'SearXNG  Base URL',
               hintText: 'http://localhost:8080',
             ),
-            controller: TextEditingController(text: settings.search.baseUrl),
+            controller: _searchBaseUrlController,
             onChanged: (value) {
               final newSettings = settings.copyWith(
                 search: settings.search.copyWith(baseUrl: value),
